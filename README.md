@@ -2,18 +2,21 @@
 
 Stream synthetic real-time data to **Microsoft Fabric Eventstream** — no data engineering experience needed. Select an industry, pick a use case, enter your Eventstream connection string, and watch events flow.
 
-![Login screen with Microsoft RTI icon]
+![Fabric Real-Time Data Generator UI](RTDG.png)
 
 ---
 
-## Option A — Download the pre-built app (Windows)
+## Option A — Download and run (Windows)
 
 1. Go to the [Releases](../../releases) page of this repository.
-2. Download **`FabricRTDG.exe`** from the latest release.
-3. Double-click it — no Python, no installation required.
+2. Download **`FabricRTDG.zip`** from the latest release and extract it anywhere.
+3. Install **[Python 3.10+](https://www.python.org/downloads/)** if you don't have it — tick **"Add Python to PATH"** during setup.
+4. Double-click **`run.bat`** inside the extracted folder.
 
-> Windows SmartScreen may show a warning the first time because the .exe is unsigned.  
-> Click **"More info" → "Run anyway"** to proceed.
+`run.bat` creates a local virtual environment, installs all dependencies automatically, and launches the app. Subsequent runs skip the install step and start instantly.
+
+> **How are releases published?**  
+> A GitHub Actions workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml)) packages the source and uploads `FabricRTDG.zip` automatically when a version tag (e.g. `v1.0.0`) is pushed.
 
 ---
 
@@ -42,15 +45,6 @@ python main.py
 
 ---
 
-## Option C — Build the .exe yourself
-
-```bash
-# 1. Clone + install requirements (same as Option B above)
-
-# 2. Double-click build.bat  — OR run in a terminal:
-build.bat
-```
-
 The script will:
 - Verify Python is on your PATH
 - Install PyInstaller if missing
@@ -60,13 +54,14 @@ The script will:
 
 ## Using the app
 
-1. **Sign in** with your Microsoft 365 / Fabric account (MSAL interactive login).
-2. **Select an industry** — Retail, Healthcare, Finance, Manufacturing, Transportation, Energy, Telecom, or Smart City.
-3. **Pick a use case** — each has a description and sample schema (click **Details**).
-4. **Enter your Eventstream endpoint** in the connection bar at the top of any page:
+1. **Select an industry** — Retail, Healthcare, Finance, Manufacturing, Transportation, Energy, Telecom, Smart City, or Information Technology.
+2. **Pick a use case** — each has a description and sample schema (click **Details**).
+3. **Enter your Eventstream endpoint** in the connection bar at the top of the streaming page:
    - *Connection string* — copy from your Fabric Eventstream custom endpoint
    - *Event Hub / entity name* — the entity name shown in the Eventstream UI
-5. Click **Connect**, then **Start** to begin streaming.
+4. Click **Connect**, then **Start** to begin streaming.
+5. Adjust the **Stream Rate** (10 / 100 / 500 / 1 000 events/sec) at any time.
+6. Open the **Dashboard** to monitor all active streams side-by-side.
 
 ---
 
@@ -84,20 +79,21 @@ The script will:
 ```
 fabric-rtdg/
 ├── main.py                   # Entry point
-├── config.py                 # App constants (client id, scopes, defaults)
+├── config.py                 # App constants and defaults
 ├── requirements.txt
 ├── build.bat                 # Windows build script (produces .exe)
 ├── fabric_rtdg.spec          # PyInstaller spec
+├── .github/
+│   └── workflows/
+│       └── release.yml       # Auto-builds .exe and publishes GitHub Release on tag push
 ├── assets/
 │   ├── icons/
-│   │   └── real_time_intelligence_icon.svg
 │   └── styles/
 │       └── dark_theme.qss
 ├── core/
-│   ├── auth.py               # MSAL login
 │   ├── eventhub_client.py    # Azure Event Hub sender
 │   ├── stream_worker.py      # Background streaming thread
-│   └── generators/           # 8 industry data generators
+│   └── generators/           # 9 industry data generators
 │       ├── retail.py
 │       ├── healthcare.py
 │       ├── finance.py
@@ -105,15 +101,16 @@ fabric-rtdg/
 │       ├── transportation.py
 │       ├── energy.py
 │       ├── telecom.py
-│       └── smart_city.py
+│       ├── smart_city.py
+│       └── information_technology.py
 └── ui/
     ├── main_window.py
-    ├── login_page.py
     ├── industry_page.py
     ├── use_cases_page.py
     ├── streaming_page.py
+    ├── sidebar.py
+    ├── dashboard_page.py
     └── components/
-        ├── bounce_button.py
         ├── conn_bar.py
         └── log_display.py
 ```
@@ -127,8 +124,8 @@ fabric-rtdg/
 | `PyQt6` | Desktop UI framework |
 | `qtawesome` | Font Awesome icons |
 | `azure-eventhub` | Send events to Fabric Eventstream |
-| `msal` | Microsoft Entra ID (AAD) login |
 | `faker` | Synthetic data generation |
+| `requests` | HTTP utilities |
 | `python-dotenv` | Optional local env overrides |
 
 ---

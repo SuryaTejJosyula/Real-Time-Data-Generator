@@ -1,0 +1,38 @@
+name: Release
+
+# Triggers when you push a version tag, e.g.:
+#   git tag v1.2.0
+#   git push origin v1.2.0
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release zip
+        run: |
+          mkdir FabricRTDG
+          # Copy source files — exclude git internals, build artefacts, venvs
+          rsync -av --exclude='.git' \
+                    --exclude='.venv' \
+                    --exclude='venv' \
+                    --exclude='__pycache__' \
+                    --exclude='*.pyc' \
+                    --exclude='build' \
+                    --exclude='dist' \
+                    --exclude='*.spec.bak' \
+                    . FabricRTDG/
+          zip -r FabricRTDG.zip FabricRTDG/
+
+      - name: Upload zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FabricRTDG.zip
+          generate_release_notes: true
