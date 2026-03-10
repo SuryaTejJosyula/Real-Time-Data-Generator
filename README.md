@@ -9,7 +9,7 @@ Stream synthetic real-time data to **Microsoft Fabric Eventstream** — no data 
 ## Option A — Download and run (Windows)
 
 1. Go to the [Releases](../../releases) page of this repository.
-2. Download **`FabricRTDG.zip`** from the latest release and extract it anywhere.
+2. Under **Assets**, download **`FabricRTDG.zip`** (not "Source code") and extract it anywhere.
 3. Install **[Python 3.10+](https://www.python.org/downloads/)** if you don't have it — tick **"Add Python to PATH"** during setup.
 4. Double-click **`run.bat`** inside the extracted folder.
 
