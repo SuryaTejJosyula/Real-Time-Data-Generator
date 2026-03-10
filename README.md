@@ -2,7 +2,7 @@
 
 Stream synthetic real-time data to **Microsoft Fabric Eventstream** — no data engineering experience needed. Select an industry, pick a use case, enter your Eventstream connection string, and watch events flow.
 
-![Fabric Real-Time Data Generator UI](RTDG.png)
+![Fabric Real-Time Data Generator UI](assets/RTDG.png)
 
 ---
 
