@@ -231,13 +231,13 @@ class StreamingPage(QWidget):
             btn = QPushButton(f"{eps_val}")
             btn.setCheckable(True)
             btn.setFixedHeight(28)
-            btn.setFixedWidth(54)
             btn.setChecked(eps_val == DEFAULT_EVENTS_PER_SECOND)
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: #1e1e1e; color: #888888;
                     border: 1px solid #333333; border-radius: 6px;
                     font-size: 9pt; font-weight: 600;
+                    padding: 0 10px; min-width: 38px;
                 }
                 QPushButton:checked {
                     background-color: #6db8f0; color: #0a1a2e;
@@ -253,6 +253,22 @@ class StreamingPage(QWidget):
         btn_row.addWidget(eps_unit)
         eps_box2.addLayout(btn_row)
         stats_layout.addLayout(eps_box2)
+
+        # Anomaly injection toggle
+        self._anomaly_btn = QPushButton("⚡ Inject Anomaly")
+        self._anomaly_btn.setCheckable(True)
+        self._anomaly_btn.setFixedHeight(28)
+        self._anomaly_btn.setStyleSheet("""
+            QPushButton { background-color: #1e1e1e; color: #888888;
+                border: 1px solid #333333; border-radius: 6px;
+                font-size: 9pt; font-weight: 600; padding: 0 12px; }
+            QPushButton:checked { background-color: #bf3030; color: #ffffff;
+                border-color: #ff4040; }
+            QPushButton:hover:!checked { background-color: #2a2a2a; color: #cccccc; }
+        """)
+        self._anomaly_btn.toggled.connect(self._on_anomaly_toggled)
+        stats_layout.addSpacing(20)
+        stats_layout.addWidget(self._anomaly_btn, alignment=Qt.AlignmentFlag.AlignVCenter)
 
         root.addWidget(stats_bar)
 
@@ -440,6 +456,10 @@ class StreamingPage(QWidget):
         if self._worker:
             self._worker.set_eps(eps_val)
         self.eps_changed.emit(eps_val)
+
+    def _on_anomaly_toggled(self, checked: bool):
+        if self._worker:
+            self._worker.set_anomaly_mode(checked)
 
     def _on_back(self):
         self._stop_worker()

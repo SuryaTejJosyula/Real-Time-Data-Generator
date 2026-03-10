@@ -23,7 +23,7 @@ _SHIPMENTS     = _T["shipment_ids"]
 # ── 1 · GPS Fleet Tracking ────────────────────────────────────────────────────
 
 class GPSFleetGenerator(BaseGenerator):
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         lat = round(random.uniform(25.0, 60.0), 6)
         lon = round(random.uniform(-130.0, 40.0), 6)
         speed = round(random.uniform(0, 110), 1)
@@ -42,6 +42,15 @@ class GPSFleetGenerator(BaseGenerator):
             "cargo_weight_kg": random.randint(0, 30000),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "speed_kmh": round(random.uniform(200, 280), 1),
+            "cargo_weight_kg": 0,
+            "_anomaly": True, "_anomaly_type": "vehicle_theft",
+        })
+        return evt
+
 
 # ── 2 · Package Status Updates ───────────────────────────────────────────────
 
@@ -50,7 +59,7 @@ class PackageStatusGenerator(BaseGenerator):
                 "DELIVERED", "FAILED_DELIVERY", "RETURNED", "EXCEPTION"]
     CARRIERS = ["FedEx", "UPS", "DHL", "USPS", "Amazon Logistics", "OnTrac"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -66,6 +75,14 @@ class PackageStatusGenerator(BaseGenerator):
             "signature_req": random.random() > 0.6,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "status": "EXCEPTION", "facility_id": "UNKNOWN",
+            "_anomaly": True, "_anomaly_type": "package_lost",
+        })
+        return evt
+
 
 # ── 3 · Traffic Incidents ─────────────────────────────────────────────────────
 
@@ -74,7 +91,7 @@ class TrafficIncidentGenerator(BaseGenerator):
              "Congestion", "Weather Hazard", "Road Work", "Special Event"]
     SEVERITY = ["Minor", "Moderate", "Severe", "Critical"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         lat = round(random.uniform(25.0, 60.0), 5)
         lon = round(random.uniform(-130.0, 40.0), 5)
         return {
@@ -92,6 +109,15 @@ class TrafficIncidentGenerator(BaseGenerator):
             "cleared":       random.random() < 0.2,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "type": "Road Closure", "severity": "Critical",
+            "lanes_blocked": 4, "delay_min": 180, "cleared": False,
+            "_anomaly": True, "_anomaly_type": "major_closure",
+        })
+        return evt
+
 
 # ── 4 · Cargo / Shipment Updates ─────────────────────────────────────────────
 
@@ -99,7 +125,7 @@ class CargoUpdateGenerator(BaseGenerator):
     EVENTS = ["BOOKING", "LOADED", "DEPARTED", "IN_TRANSIT", "CUSTOMS",
               "ARRIVED", "UNLOADED", "FINAL_DELIVERY", "EXCEPTION"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "cargo_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -114,6 +140,15 @@ class CargoUpdateGenerator(BaseGenerator):
             "temperature_c": round(random.uniform(-25.0, 40.0), 1) if random.random() > 0.5 else None,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "event": "EXCEPTION",
+            "temperature_c": round(random.uniform(80.0, 120.0), 1),
+            "_anomaly": True, "_anomaly_type": "hazmat_spill",
+        })
+        return evt
+
 
 # ── 5 · Driver Behaviour ─────────────────────────────────────────────────────
 
@@ -121,7 +156,7 @@ class DriverBehaviourGenerator(BaseGenerator):
     EVENTS = ["HARSH_BRAKE", "RAPID_ACCEL", "SHARP_TURN", "SPEEDING",
               "IDLE_EXCESS", "FATIGUE_ALERT", "LANE_DEPARTURE", "MOBILE_USE"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
@@ -136,11 +171,20 @@ class DriverBehaviourGenerator(BaseGenerator):
             "driver_score": random.randint(40, 100),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "event_type": "HARSH_BRAKE", "speed_kmh": 140.0,
+            "severity_g": 5.0, "score_delta": -15.0, "driver_score": 10,
+            "_anomaly": True, "_anomaly_type": "dangerous_driving",
+        })
+        return evt
+
 
 # ── 6 · Fuel Readings ─────────────────────────────────────────────────────────
 
 class FuelReadingGenerator(BaseGenerator):
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         fuel_before = round(random.uniform(10, 100), 1)
         consumed    = round(random.uniform(0.1, 30.0), 2)
         return {
@@ -156,6 +200,15 @@ class FuelReadingGenerator(BaseGenerator):
             "refuelled_l":  round(random.uniform(0, 200), 1) if random.random() < 0.1 else 0,
             "odometer_km":  random.randint(0, 500000),
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        consumed = round(random.uniform(200.0, 400.0), 2)
+        evt.update({
+            "consumed_l": consumed, "distance_km": 0.0,
+            "_anomaly": True, "_anomaly_type": "fuel_siphoning",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

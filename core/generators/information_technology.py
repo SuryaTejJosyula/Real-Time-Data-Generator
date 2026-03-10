@@ -30,7 +30,7 @@ class SecurityLogGenerator(BaseGenerator):
     SEVERITIES   = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
     SEV_WEIGHTS  = [3, 8, 20, 35, 34]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         sev = random.choices(self.SEVERITIES, weights=self.SEV_WEIGHTS, k=1)[0]
         return {
             "event_id":      str(uuid.uuid4()),
@@ -48,6 +48,15 @@ class SecurityLogGenerator(BaseGenerator):
             "blocked":       sev in ("CRITICAL", "HIGH"),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "event_type": "MALWARE_DETECTED", "severity": "CRITICAL",
+            "threat_score": 10.0, "blocked": False,
+            "_anomaly": True, "_anomaly_type": "active_breach",
+        })
+        return evt
+
 
 # ── 2 · Audit Logs ────────────────────────────────────────────────────────────
 
@@ -61,7 +70,7 @@ class AuditLogGenerator(BaseGenerator):
     APPS        = ["ActiveDirectory", "JIRA", "Confluence", "GitHub", "AWS Console",
                    "Azure Portal", "Salesforce", "ServiceNow", "Okta"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         outcome = random.choices(self.OUTCOMES, weights=self.OUT_WEIGHTS, k=1)[0]
         return {
             "audit_id":       str(uuid.uuid4()),
@@ -79,6 +88,15 @@ class AuditLogGenerator(BaseGenerator):
             "risk_flag":      outcome == "DENIED" or random.random() < 0.05,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "action": "DELETE", "resource_type": "database_record",
+            "outcome": "SUCCESS", "changes_count": 9999, "risk_flag": True,
+            "_anomaly": True, "_anomaly_type": "insider_threat",
+        })
+        return evt
+
 
 # ── 3 · Network Logs ──────────────────────────────────────────────────────────
 
@@ -87,7 +105,7 @@ class NetworkLogGenerator(BaseGenerator):
     DIRECTIONS = ["INBOUND", "OUTBOUND", "LATERAL"]
     FLAGS      = ["SYN", "ACK", "SYN-ACK", "FIN", "RST", "PSH"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         bytes_sent = random.randint(64, 1_500_000)
         return {
             "flow_id":       str(uuid.uuid4()),
@@ -107,6 +125,14 @@ class NetworkLogGenerator(BaseGenerator):
             "anomaly_score": round(random.uniform(0.0, 1.0), 4),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "bytes_sent": 1_500_000, "direction": "OUTBOUND", "anomaly_score": 0.99,
+            "_anomaly": True, "_anomaly_type": "data_exfiltration",
+        })
+        return evt
+
 
 # ── 4 · System Logs ───────────────────────────────────────────────────────────
 
@@ -118,7 +144,7 @@ class SystemLogGenerator(BaseGenerator):
     OS_LIST   = ["Ubuntu 24.04", "RHEL 9", "Windows Server 2022",
                  "Debian 12", "Amazon Linux 2023", "CentOS Stream 9"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         level = random.choices(self.LEVELS, weights=self.LVL_WGTS, k=1)[0]
         return {
             "log_id":       str(uuid.uuid4()),
@@ -135,6 +161,15 @@ class SystemLogGenerator(BaseGenerator):
             "uptime_hours": round(random.uniform(0.1, 8760.0), 1),
             "exit_code":    0 if level in ("DEBUG", "INFO", "NOTICE") else random.choice([0, 1, 127, 255]),
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "level": "CRITICAL", "service": "kernel",
+            "cpu_pct": 100.0, "mem_pct": 100.0, "exit_code": 255,
+            "_anomaly": True, "_anomaly_type": "kernel_panic",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

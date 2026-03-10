@@ -21,7 +21,7 @@ _SHIFTS    = ["Morning", "Afternoon", "Night"]
 class MachineSensorGenerator(BaseGenerator):
     SENSORS = ["Temperature", "Vibration", "Pressure", "RPM", "Current", "Voltage", "Torque"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         sensor = random.choice(self.SENSORS)
         ranges = {
             "Temperature": (15.0, 350.0, "°C"),
@@ -48,6 +48,15 @@ class MachineSensorGenerator(BaseGenerator):
             "alarm":      value > threshold,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "sensor_type": "Temperature", "unit": "°C",
+            "value": 500.0, "threshold": 315.0, "alarm": True,
+            "_anomaly": True, "_anomaly_type": "runaway_machine",
+        })
+        return evt
+
 
 # ── 2 · Quality Defects ───────────────────────────────────────────────────────
 
@@ -57,7 +66,7 @@ class QualityDefectGenerator(BaseGenerator):
     SEVERITY     = ["Minor", "Major", "Critical"]
     DISPOSITIONS = ["Rework", "Scrap", "Accept as-is", "Hold for Review"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "defect_id":    str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -72,11 +81,20 @@ class QualityDefectGenerator(BaseGenerator):
             "inspector_id": f"QC-{random.randint(1, 50):03d}",
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "defect_type": "Contamination", "severity": "Critical",
+            "qty_defective": 5000, "disposition": "Scrap",
+            "_anomaly": True, "_anomaly_type": "batch_contamination",
+        })
+        return evt
+
 
 # ── 3 · Production Throughput ─────────────────────────────────────────────────
 
 class ProductionThroughputGenerator(BaseGenerator):
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         target = random.randint(100, 2000)
         actual = int(target * random.uniform(0.65, 1.10))
         return {
@@ -93,11 +111,19 @@ class ProductionThroughputGenerator(BaseGenerator):
             "scrap_units":   random.randint(0, int(actual * 0.05)),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "actual_units": 0, "oee_pct": 0.0, "downtime_min": 480, "scrap_units": 0,
+            "_anomaly": True, "_anomaly_type": "line_stoppage",
+        })
+        return evt
+
 
 # ── 4 · Energy Consumption per Machine ───────────────────────────────────────
 
 class MachineEnergyGenerator(BaseGenerator):
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         active_kw = round(random.uniform(0.5, 500.0), 2)
         return {
             "reading_id":   str(uuid.uuid4()),
@@ -112,6 +138,14 @@ class MachineEnergyGenerator(BaseGenerator):
             "state":        random.choice(["Running", "Idle", "Standby", "Off"]),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "active_kw": 9999.0, "power_factor": 0.05, "state": "Running",
+            "_anomaly": True, "_anomaly_type": "power_spike",
+        })
+        return evt
+
 
 # ── 5 · Maintenance Alerts ────────────────────────────────────────────────────
 
@@ -121,7 +155,7 @@ class MaintenanceAlertGenerator(BaseGenerator):
     COMPS    = ["Bearing", "Motor", "Gearbox", "Hydraulics", "Belt", "Valve",
                 "Filter", "Coolant System", "Conveyor", "Spindle"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "alert_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
@@ -137,6 +171,14 @@ class MaintenanceAlertGenerator(BaseGenerator):
             "technician":  f"TECH-{random.randint(1, 100):03d}",
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "alert_type": "Emergency", "severity": "Critical", "est_downtime_hr": 72.0,
+            "_anomaly": True, "_anomaly_type": "emergency_shutdown",
+        })
+        return evt
+
 
 # ── 6 · Raw Material Usage ────────────────────────────────────────────────────
 
@@ -145,7 +187,7 @@ class RawMaterialUsageGenerator(BaseGenerator):
                  "Glass Fibre", "Chemical A", "Chemical B", "Lubricant", "Paint"]
     UNITS     = ["kg", "litres", "tonnes", "pieces", "metres"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "usage_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -159,6 +201,15 @@ class RawMaterialUsageGenerator(BaseGenerator):
             "cost_per_unit": round(random.uniform(0.10, 500.0), 2),
             "supplier_id":  f"SUP-{random.randint(1, 200):04d}",
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        stock_before = round(random.uniform(100, 5000), 2)
+        evt.update({
+            "quantity_used": stock_before, "stock_before": stock_before, "stock_after": 0.0,
+            "_anomaly": True, "_anomaly_type": "stock_out",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

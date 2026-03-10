@@ -25,7 +25,7 @@ _DEVICES        = ["iPhone 16", "Samsung S25", "Pixel 9", "Xiaomi 15", "OnePlus 
 class NetworkTrafficGenerator(BaseGenerator):
     PROTOCOLS = ["HTTP", "HTTPS", "DNS", "SMTP", "FTP", "VoIP", "IoT-MQTT", "Streaming"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -40,6 +40,15 @@ class NetworkTrafficGenerator(BaseGenerator):
             "active_sessions": random.randint(0, 100000),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "bytes_in": 150_000_000, "packet_loss_pct": 5.0,
+            "active_sessions": 100000, "latency_ms": 500.0,
+            "_anomaly": True, "_anomaly_type": "ddos_attack",
+        })
+        return evt
+
 
 # ── 2 · Call Detail Records ───────────────────────────────────────────────────
 
@@ -47,7 +56,7 @@ class CDRGenerator(BaseGenerator):
     CALL_TYPES  = ["Voice", "Video", "Conference", "International", "Toll-Free"]
     TERMINATIONS = ["Normal", "Busy", "No Answer", "Failed", "Dropped"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         duration = random.randint(0, 7200)
         return {
             "cdr_id":         str(uuid.uuid4()),
@@ -63,6 +72,15 @@ class CDRGenerator(BaseGenerator):
             "roaming":        random.random() < 0.08,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "duration_sec": 86400, "charge_usd": 504.0,
+            "termination": "Normal",
+            "_anomaly": True, "_anomaly_type": "infinite_call",
+        })
+        return evt
+
 
 # ── 3 · Data Usage ────────────────────────────────────────────────────────────
 
@@ -71,7 +89,7 @@ class DataUsageGenerator(BaseGenerator):
     APPS     = ["YouTube", "Netflix", "TikTok", "WhatsApp", "Instagram",
                 "Spotify", "Chrome", "Zoom", "Games", "Other"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         dl = random.randint(0, 500_000_000)
         ul = random.randint(0, 100_000_000)
         return {
@@ -88,6 +106,15 @@ class DataUsageGenerator(BaseGenerator):
             "throttled":      random.random() < 0.05,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "download_bytes": 500_000_000, "upload_bytes": 100_000_000,
+            "duration_sec": 60, "throttled": True,
+            "_anomaly": True, "_anomaly_type": "data_bomb",
+        })
+        return evt
+
 
 # ── 4 · Network Fault Events ──────────────────────────────────────────────────
 
@@ -97,7 +124,7 @@ class NetworkFaultGenerator(BaseGenerator):
                    "Capacity Breach", "Security Anomaly"]
     SEVERITIES  = ["Warning", "Minor", "Major", "Critical"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "fault_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -112,6 +139,15 @@ class NetworkFaultGenerator(BaseGenerator):
             "mttr_min":     random.randint(0, 480),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "fault_type": "Hardware Failure", "severity": "Critical",
+            "affected_subscribers": 500000, "resolved": False,
+            "_anomaly": True, "_anomaly_type": "national_outage",
+        })
+        return evt
+
 
 # ── 5 · Customer Churn Signals ────────────────────────────────────────────────
 
@@ -121,7 +157,7 @@ class ChurnSignalGenerator(BaseGenerator):
                "Competitor Promo Response", "NPS Detractor", "Credit Decline"]
     PLANS   = ["Basic", "Standard", "Premium", "Business", "Unlimited", "Family"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         score = round(random.uniform(0.0, 1.0), 4)
         return {
             "signal_id":     str(uuid.uuid4()),
@@ -136,6 +172,15 @@ class ChurnSignalGenerator(BaseGenerator):
             "channel":       random.choice(["App", "Web", "Store", "Call Center"]),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "churn_score": 1.0, "signal_type": "Port-Out Enquiry",
+            "action": "RETENTION_OFFER",
+            "_anomaly": True, "_anomaly_type": "mass_churn_signal",
+        })
+        return evt
+
 
 # ── 6 · SMS / Messaging Events ────────────────────────────────────────────────
 
@@ -143,7 +188,7 @@ class SMSEventGenerator(BaseGenerator):
     TYPES    = ["P2P", "A2P", "P2A", "Bulk"]
     STATUSES = ["Sent", "Delivered", "Failed", "Queued", "Expired"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "msg_id":     str(uuid.uuid4()),
             "timestamp":  datetime.now(timezone.utc).isoformat(),
@@ -157,6 +202,15 @@ class SMSEventGenerator(BaseGenerator):
             "spam_flag":  random.random() < 0.02,
             "roaming":    random.random() < 0.06,
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "msg_type": "A2P", "segment_count": 5,
+            "spam_flag": True, "status": "Sent",
+            "_anomaly": True, "_anomaly_type": "spam_burst",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

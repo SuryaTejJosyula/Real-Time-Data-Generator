@@ -23,7 +23,7 @@ class TrafficCountGenerator(BaseGenerator):
     VEHICLE_TYPES = ["Car", "Truck", "Motorcycle", "Bus", "Cyclist", "Pedestrian", "Van"]
     DIRECTIONS    = ["North", "South", "East", "West"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -38,6 +38,14 @@ class TrafficCountGenerator(BaseGenerator):
             "congestion_index": round(random.uniform(0, 1), 3),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "count": 0, "avg_speed_kmh": 0.0, "congestion_index": 1.0,
+            "_anomaly": True, "_anomaly_type": "gridlock",
+        })
+        return evt
+
 
 # ── 2 · Air Quality ───────────────────────────────────────────────────────────
 
@@ -45,7 +53,7 @@ class AirQualityGenerator(BaseGenerator):
     CATEGORIES = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy",
                   "Very Unhealthy", "Hazardous"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         aqi = random.randint(0, 500)
         cat_idx = min(5, aqi // 50)
         return {
@@ -65,6 +73,14 @@ class AirQualityGenerator(BaseGenerator):
             "humidity_pct": round(random.uniform(10.0, 100.0), 1),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "aqi": 500, "category": "Hazardous", "pm25_ugm3": 500.0,
+            "_anomaly": True, "_anomaly_type": "hazardous_air_quality",
+        })
+        return evt
+
 
 # ── 3 · Waste Level Sensors ───────────────────────────────────────────────────
 
@@ -72,7 +88,7 @@ class WasteLevelGenerator(BaseGenerator):
     BIN_TYPES = ["General", "Recycling", "Organic", "Hazardous", "Glass", "Paper"]
     STATUSES  = ["OK", "FULL", "OVERFLOW", "FIRE_DETECTED", "MALFUNCTION"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         level = round(random.uniform(0, 100), 1)
         return {
             "reading_id":   str(uuid.uuid4()),
@@ -88,6 +104,14 @@ class WasteLevelGenerator(BaseGenerator):
             "last_emptied_h_ago": random.randint(0, 72),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "fill_pct": 100.0, "status": "FIRE_DETECTED", "temperature_c": 80.0,
+            "_anomaly": True, "_anomaly_type": "bin_fire",
+        })
+        return evt
+
 
 # ── 4 · Smart Parking ─────────────────────────────────────────────────────────
 
@@ -95,7 +119,7 @@ class SmartParkingGenerator(BaseGenerator):
     EVENTS = ["VEHICLE_ARRIVED", "VEHICLE_DEPARTED", "PAYMENT_MADE",
               "OVERSTAY_ALERT", "RESERVATION_START", "RESERVATION_END"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -111,6 +135,15 @@ class SmartParkingGenerator(BaseGenerator):
             "occupancy_pct": round(random.uniform(0, 100), 1),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "occupancy_pct": 100.0, "fee_usd": 500.0,
+            "event_type": "OVERSTAY_ALERT",
+            "_anomaly": True, "_anomaly_type": "lot_overflow",
+        })
+        return evt
+
 
 # ── 5 · Transit / Public Transport ────────────────────────────────────────────
 
@@ -118,7 +151,7 @@ class TransitTrackingGenerator(BaseGenerator):
     MODES    = ["Metro", "Bus", "Tram", "Light Rail", "Ferry"]
     STATUSES = ["On Time", "Delayed", "Cancelled", "Diverted", "Boarding", "In Transit"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "event_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
@@ -136,6 +169,14 @@ class TransitTrackingGenerator(BaseGenerator):
             "longitude":   round(random.uniform(-130.0, 40.0), 5),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "status": "Cancelled", "delay_min": 45, "passengers": 0,
+            "_anomaly": True, "_anomaly_type": "transit_system_failure",
+        })
+        return evt
+
 
 # ── 6 · Environmental Sensors ─────────────────────────────────────────────────
 
@@ -143,7 +184,7 @@ class EnvironmentalSensorGenerator(BaseGenerator):
     SENSOR_TYPES = ["Weather Station", "Noise Meter", "UV Sensor",
                     "Earthquake Sensor", "River Level", "Flood Sensor"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         sensor = random.choice(self.SENSOR_TYPES)
         extra = {}
         if sensor == "Weather Station":
@@ -169,6 +210,14 @@ class EnvironmentalSensorGenerator(BaseGenerator):
             "humidity_pct":  round(random.uniform(10.0, 100.0), 1),
             **extra,
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "sensor_type": "Flood Sensor", "level_m": 15.0, "flood_warning": True,
+            "_anomaly": True, "_anomaly_type": "flood_warning",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

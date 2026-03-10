@@ -20,7 +20,7 @@ _ACCOUNTS = _EN["account_ids"]
 class SmartMeterGenerator(BaseGenerator):
     TARIFFS = ["Flat", "Time-of-Use", "Tiered", "EV", "Commercial"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         consumption = round(random.uniform(0.0, 15.0), 3)
         return {
             "reading_id":      str(uuid.uuid4()),
@@ -35,11 +35,20 @@ class SmartMeterGenerator(BaseGenerator):
             "tamper_alert":    random.random() < 0.005,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "consumption_kwh": 0.0, "voltage_v": 0.0,
+            "tamper_alert": True,
+            "_anomaly": True, "_anomaly_type": "meter_tamper",
+        })
+        return evt
+
 
 # ── 2 · Grid Load Monitoring ──────────────────────────────────────────────────
 
 class GridLoadGenerator(BaseGenerator):
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         capacity = round(random.uniform(100.0, 5000.0), 1)
         load     = round(capacity * random.uniform(0.3, 1.05), 1)
         return {
@@ -55,13 +64,25 @@ class GridLoadGenerator(BaseGenerator):
             "overload":      load > capacity,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        capacity = evt["capacity_mw"]
+        evt.update({
+            "load_mw": round(capacity * 2.0, 1),
+            "utilisation_pct": 200.0,
+            "frequency_hz": round(random.uniform(47.0, 48.5), 3),
+            "overload": True,
+            "_anomaly": True, "_anomaly_type": "grid_overload",
+        })
+        return evt
+
 
 # ── 3 · Renewable Energy Output ───────────────────────────────────────────────
 
 class RenewableOutputGenerator(BaseGenerator):
     SOURCE_TYPES = ["Solar", "Wind", "Hydro", "Geothermal", "Tidal"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         rated = round(random.uniform(1.0, 2000.0), 1)
         actual = round(rated * random.uniform(0.0, 1.05), 1)
         return {
@@ -77,13 +98,23 @@ class RenewableOutputGenerator(BaseGenerator):
             "co2_avoided_t": round(actual * 0.233 * random.uniform(0.8, 1.2), 2),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        rated = evt["rated_mw"]
+        evt.update({
+            "output_mw": 0.0, "capacity_factor": 0.0, "curtailed_mw": rated,
+            "co2_avoided_t": 0.0,
+            "_anomaly": True, "_anomaly_type": "plant_shutdown",
+        })
+        return evt
+
 
 # ── 4 · Pipeline / Gas Pressure ───────────────────────────────────────────────
 
 class PipelinePressureGenerator(BaseGenerator):
     FLUIDS = ["Natural Gas", "Crude Oil", "Water", "Steam", "Hydrogen", "CO2"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         max_p  = round(random.uniform(20.0, 200.0), 1)
         actual = round(max_p * random.uniform(0.5, 1.15), 2)
         return {
@@ -99,6 +130,16 @@ class PipelinePressureGenerator(BaseGenerator):
             "leak_detected": actual > max_p * 1.1 or random.random() < 0.01,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        max_p = evt["max_safe_bar"]
+        evt.update({
+            "pressure_bar": round(max_p * 3.0, 2),
+            "flow_m3h": 0.0, "leak_detected": True,
+            "_anomaly": True, "_anomaly_type": "pipeline_rupture",
+        })
+        return evt
+
 
 # ── 5 · Outage Events ─────────────────────────────────────────────────────────
 
@@ -107,7 +148,7 @@ class OutageEventGenerator(BaseGenerator):
                  "Maintenance", "Overload", "Cyber Incident", "Unknown"]
     STATUSES  = ["OPEN", "IN_PROGRESS", "RESTORED", "PARTIAL_RESTORE"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         cust = random.randint(1, 50000)
         return {
             "outage_id":       str(uuid.uuid4()),
@@ -123,6 +164,15 @@ class OutageEventGenerator(BaseGenerator):
             "crew_dispatched": random.randint(0, 20),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "customers_affected": 50000, "mwh_lost": 5000.0,
+            "priority": "Critical", "status": "OPEN",
+            "_anomaly": True, "_anomaly_type": "major_grid_failure",
+        })
+        return evt
+
 
 # ── 6 · Demand Forecast ───────────────────────────────────────────────────────
 
@@ -130,7 +180,7 @@ class DemandForecastGenerator(BaseGenerator):
     HORIZON = ["1H", "6H", "24H", "48H", "7D"]
     MODELS  = ["ARIMA", "LSTM", "XGBoost", "Prophet", "EnsembleV2"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         forecast = round(random.uniform(200.0, 8000.0), 1)
         actual   = round(forecast * random.uniform(0.90, 1.10), 1)
         return {
@@ -145,6 +195,18 @@ class DemandForecastGenerator(BaseGenerator):
             "confidence_pct": round(random.uniform(80.0, 99.5), 1),
             "temperature_c": round(random.uniform(-20.0, 45.0), 1),
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        forecast = evt["forecast_mw"]
+        actual = round(forecast * 0.01, 1)
+        evt.update({
+            "actual_mw": actual,
+            "mape_pct": round(abs(actual - forecast) / forecast * 100, 2),
+            "confidence_pct": 1.0,
+            "_anomaly": True, "_anomaly_type": "forecast_catastrophic_miss",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

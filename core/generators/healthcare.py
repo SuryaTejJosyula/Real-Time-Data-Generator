@@ -23,7 +23,7 @@ _DOCTOR_IDS  = _H["doctor_ids"]
 class PatientVitalsGenerator(BaseGenerator):
     WARDS = ["ICU", "Emergency", "General", "Cardiology", "Neurology", "Pediatrics", "Oncology"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         spo2 = random.uniform(88.0, 100.0)
         return {
             "reading_id":     str(uuid.uuid4()),
@@ -40,6 +40,15 @@ class PatientVitalsGenerator(BaseGenerator):
             "alert":          spo2 < 92.0 or random.random() < 0.05,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "heart_rate_bpm": 195, "spo2_pct": 72.0,
+            "bp_systolic": 220, "temp_celsius": 42.1, "alert": True,
+            "_anomaly": True, "_anomaly_type": "cardiac_crisis",
+        })
+        return evt
+
 
 # ── 2 · ER Admissions ─────────────────────────────────────────────────────────
 
@@ -49,7 +58,7 @@ class ERAdmissionGenerator(BaseGenerator):
                   "Respiratory Distress", "Fever", "Fracture", "Allergic Reaction"]
     TRANSPORT  = ["Ambulance", "Walk-in", "Police", "Air-Evac", "Referred"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "admission_id":   str(uuid.uuid4()),
             "timestamp":      datetime.now(timezone.utc).isoformat(),
@@ -64,6 +73,15 @@ class ERAdmissionGenerator(BaseGenerator):
             "attending_id":   random.choice(_DOCTOR_IDS),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "triage_level": "Red", "transport_mode": "Air-Evac",
+            "wait_time_min": 0, "chief_complaint": "Mass Casualty Trauma",
+            "_anomaly": True, "_anomaly_type": "mass_casualty",
+        })
+        return evt
+
 
 # ── 3 · Medication Dispensing ─────────────────────────────────────────────────
 
@@ -73,7 +91,7 @@ class MedicationDispensingGenerator(BaseGenerator):
     ROUTES  = ["Oral", "IV", "IM", "Subcutaneous", "Topical", "Inhaled"]
     STATUSES = ["Dispensed", "Returned", "Out-of-stock", "Expired", "Substituted"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "dispense_id":  str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -87,6 +105,14 @@ class MedicationDispensingGenerator(BaseGenerator):
             "status":       random.choice(self.STATUSES),
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "dose_mg": 10000, "status": "Dispensed",
+            "_anomaly": True, "_anomaly_type": "wrong_dose",
+        })
+        return evt
+
 
 # ── 4 · Lab Results ───────────────────────────────────────────────────────────
 
@@ -95,7 +121,7 @@ class LabResultGenerator(BaseGenerator):
               "Blood Culture", "Urinalysis", "Troponin"]
     STATUS = ["Normal", "Abnormal", "Critical", "Inconclusive", "Pending"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "result_id":    str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -110,6 +136,15 @@ class LabResultGenerator(BaseGenerator):
             "critical_flag": random.random() < 0.08,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "status": "Critical", "critical_flag": True,
+            "result_value": round(random.uniform(900.0, 9999.0), 2),
+            "_anomaly": True, "_anomaly_type": "critical_value",
+        })
+        return evt
+
 
 # ── 5 · Medical Device Alerts ─────────────────────────────────────────────────
 
@@ -118,7 +153,7 @@ class DeviceAlertGenerator(BaseGenerator):
                  "Defibrillator", "CPAP", "Dialysis Machine", "Incubator"]
     SEVERITIES = ["Info", "Warning", "Critical", "System"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "alert_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
@@ -132,6 +167,16 @@ class DeviceAlertGenerator(BaseGenerator):
             "acknowledged": False,
         }
 
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "severity": "Critical", "code": "E9999",
+            "message": "Device failure: critical hardware fault detected. Immediate service required.",
+            "acknowledged": False,
+            "_anomaly": True, "_anomaly_type": "device_failure",
+        })
+        return evt
+
 
 # ── 6 · Appointment Events ────────────────────────────────────────────────────
 
@@ -141,7 +186,7 @@ class AppointmentEventGenerator(BaseGenerator):
     SPECIALTIES  = ["Cardiology", "Orthopedics", "Dermatology", "Neurology",
                     "Oncology", "Pediatrics", "Radiology", "General Practice"]
 
-    def generate(self) -> dict:
+    def _generate_normal(self) -> dict:
         return {
             "appt_id":      str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
@@ -154,6 +199,14 @@ class AppointmentEventGenerator(BaseGenerator):
             "telehealth":   random.random() < 0.30,
             "insurance":    random.choice(["Medicare", "Medicaid", "BlueCross", "Aetna", "Self-Pay"]),
         }
+
+    def inject_anomaly(self) -> dict:
+        evt = self._generate_normal()
+        evt.update({
+            "event_type": "CANCELLED", "duration_min": 0,
+            "_anomaly": True, "_anomaly_type": "mass_cancellation",
+        })
+        return evt
 
 
 # ── USE_CASES registry ────────────────────────────────────────────────────────

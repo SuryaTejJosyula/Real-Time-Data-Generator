@@ -46,13 +46,21 @@ class EventHubClient:
         self._producer.send_batch(batch)
 
     def send_batch_events(self, events: list) -> None:
-        """Send multiple events in a single batch. More efficient for high-rate streaming."""
+        """Send multiple events, chunking across multiple batches if needed (1 MB limit)."""
         if not self._producer:
             raise RuntimeError("Client not connected. Call connect() first.")
         batch = self._producer.create_batch()
         for event_dict in events:
-            batch.add(EventData(json.dumps(event_dict, default=str)))
-        self._producer.send_batch(batch)
+            data = EventData(json.dumps(event_dict, default=str))
+            try:
+                batch.add(data)
+            except ValueError:
+                # Current batch hit the 1 MB limit — flush it and start a new one
+                self._producer.send_batch(batch)
+                batch = self._producer.create_batch()
+                batch.add(data)
+        if len(batch) > 0:
+            self._producer.send_batch(batch)
 
     # ── Test ──────────────────────────────────────────────────────────────────
 
