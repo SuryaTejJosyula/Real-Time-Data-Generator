@@ -9,8 +9,15 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import IT as _IT_CORR
 
 _fake = Faker()
+
+_HOSTS       = _IT_CORR["hosts"]
+_USERNAMES   = _IT_CORR["usernames"]
+_ACTOR_IDS   = _IT_CORR["actor_ids"]
+_INT_IPS     = _IT_CORR["internal_ips"]
+_SESSION_IDS = _IT_CORR["session_ids"]
 
 
 # ── 1 · Security Logs ─────────────────────────────────────────────────────────
@@ -31,11 +38,11 @@ class SecurityLogGenerator(BaseGenerator):
             "event_type":    random.choice(self.EVENT_TYPES),
             "severity":      sev,
             "source_ip":     _fake.ipv4_public(),
-            "dest_ip":       _fake.ipv4_private(),
+            "dest_ip":       random.choice(_INT_IPS),
             "protocol":      random.choice(self.PROTOCOLS),
             "port":          random.choice([22, 80, 443, 445, 3389, 21, 25]),
-            "user":          _fake.user_name(),
-            "host":          _fake.hostname(),
+            "user":          random.choice(_USERNAMES),
+            "host":          random.choice(_HOSTS),
             "country":       _fake.country_code(),
             "threat_score":  round(random.uniform(0.0, 10.0), 2),
             "blocked":       sev in ("CRITICAL", "HIGH"),
@@ -59,15 +66,15 @@ class AuditLogGenerator(BaseGenerator):
         return {
             "audit_id":       str(uuid.uuid4()),
             "timestamp":      datetime.now(timezone.utc).isoformat(),
-            "actor_id":       f"USR-{random.randint(1000, 9999)}",
+            "actor_id":       random.choice(_ACTOR_IDS),
             "actor_email":    _fake.email(),
             "action":         random.choice(self.ACTIONS),
             "resource_type":  random.choice(self.RESOURCES),
             "resource_id":    str(uuid.uuid4())[:8],
             "application":    random.choice(self.APPS),
             "outcome":        outcome,
-            "ip_address":     _fake.ipv4(),
-            "session_id":     str(uuid.uuid4())[:12],
+            "ip_address":     random.choice(_INT_IPS),
+            "session_id":     random.choice(_SESSION_IDS),
             "changes_count":  random.randint(0, 20) if outcome == "SUCCESS" else 0,
             "risk_flag":      outcome == "DENIED" or random.random() < 0.05,
         }
@@ -116,7 +123,7 @@ class SystemLogGenerator(BaseGenerator):
         return {
             "log_id":       str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "host":         _fake.hostname(),
+            "host":         random.choice(_HOSTS),
             "os":           random.choice(self.OS_LIST),
             "service":      random.choice(self.SERVICES),
             "pid":          random.randint(1, 65535),

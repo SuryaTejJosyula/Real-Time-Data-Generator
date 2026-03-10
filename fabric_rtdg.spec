@@ -38,6 +38,7 @@ hidden_imports = [
     "faker.providers.misc",
     "faker.providers.person",
     # Our own generators (dynamically imported via importlib)
+    "core.correlation",
     "core.generators.retail",
     "core.generators.healthcare",
     "core.generators.finance",
@@ -46,6 +47,7 @@ hidden_imports = [
     "core.generators.energy",
     "core.generators.telecom",
     "core.generators.smart_city",
+    "core.generators.information_technology",
 ]
 
 a = Analysis(

@@ -9,11 +9,15 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import FINANCE as _F
 
 _fake = Faker()
 
-_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "CNY", "INR", "BRL"]
-_EXCHANGES  = ["NYSE", "NASDAQ", "LSE", "TSE", "HKEX", "BSE", "ASX", "NSE", "Euronext"]
+_CURRENCIES   = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "CNY", "INR", "BRL"]
+_EXCHANGES    = ["NYSE", "NASDAQ", "LSE", "TSE", "HKEX", "BSE", "ASX", "NSE", "Euronext"]
+_ACCOUNT_IDS  = _F["account_ids"]
+_CUSTOMER_IDS = _F["customer_ids"]
+_CARD_LAST4S  = _F["card_last4s"]
 
 
 # ── 1 · Stock Trades ──────────────────────────────────────────────────────────
@@ -40,7 +44,7 @@ class StockTradeGenerator(BaseGenerator):
             "value":      round(qty * price, 2),
             "status":     random.choice(self.STATUS),
             "trader_id":  f"TRD-{random.randint(1, 10000):06d}",
-            "account_id": f"ACC-{random.randint(1, 100000):08d}",
+            "account_id": random.choice(_ACCOUNT_IDS),
         }
 
 
@@ -60,7 +64,7 @@ class CardTransactionGenerator(BaseGenerator):
             "txn_id":       str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
             "card_type":    random.choice(self.CARD_TYPES),
-            "card_last4":   f"{random.randint(1000, 9999)}",
+            "card_last4":   random.choice(_CARD_LAST4S),
             "merchant":     _fake.company(),
             "merchant_city": _fake.city(),
             "merchant_country": _fake.country_code(),
@@ -85,7 +89,7 @@ class FraudEventGenerator(BaseGenerator):
         return {
             "alert_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "account_id":   f"ACC-{random.randint(1, 100000):08d}",
+            "account_id":   random.choice(_ACCOUNT_IDS),
             "fraud_type":   random.choice(self.TYPES),
             "risk_score":   score,
             "threshold":    0.75,
@@ -130,7 +134,7 @@ class LoanApplicationGenerator(BaseGenerator):
         return {
             "app_id":       str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "customer_id":  f"CUST-{random.randint(1, 1_000_000):08d}",
+            "customer_id":  random.choice(_CUSTOMER_IDS),
             "loan_type":    random.choice(self.TYPES),
             "amount":       amount,
             "term_months":  random.choice([12, 24, 36, 48, 60, 120, 180, 240, 360]),
@@ -153,8 +157,8 @@ class ATMWithdrawalGenerator(BaseGenerator):
             "timestamp":   datetime.now(timezone.utc).isoformat(),
             "atm_id":      f"ATM-{random.randint(1, 5000):05d}",
             "atm_city":    _fake.city(),
-            "account_id":  f"ACC-{random.randint(1, 100000):08d}",
-            "card_last4":  f"{random.randint(1000, 9999)}",
+            "account_id":  random.choice(_ACCOUNT_IDS),
+            "card_last4":  random.choice(_CARD_LAST4S),
             "amount":      random.choice([20, 40, 60, 80, 100, 200, 300, 500]),
             "currency":    "USD",
             "balance_after": round(random.uniform(0, 50000), 2),

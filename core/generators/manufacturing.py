@@ -7,10 +7,12 @@ import uuid
 from datetime import datetime, timezone
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import MANUFACTURING as _MFG
 
-_MACHINES  = [f"MACH-{i:04d}" for i in range(1, 201)]
-_LINES     = [f"LINE-{i:02d}" for i in range(1, 21)]
-_PLANTS    = [f"PLANT-{i:02d}" for i in range(1, 6)]
+_MACHINES  = _MFG["machine_ids"]
+_LINES     = _MFG["line_ids"]
+_PLANTS    = _MFG["plants"]
+_BATCHES   = _MFG["batch_ids"]
 _SHIFTS    = ["Morning", "Afternoon", "Night"]
 
 
@@ -60,7 +62,7 @@ class QualityDefectGenerator(BaseGenerator):
             "defect_id":    str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
             "part_number":  f"PN-{random.randint(100000, 999999)}",
-            "batch_id":     f"BATCH-{random.randint(1000, 9999)}",
+            "batch_id":     random.choice(_BATCHES),
             "line_id":      random.choice(_LINES),
             "plant":        random.choice(_PLANTS),
             "defect_type":  random.choice(self.DEFECT_TYPES),
@@ -148,7 +150,7 @@ class RawMaterialUsageGenerator(BaseGenerator):
             "usage_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
             "material":     random.choice(self.MATERIALS),
-            "batch_id":     f"BATCH-{random.randint(1000, 9999)}",
+            "batch_id":     random.choice(_BATCHES),
             "plant":        random.choice(_PLANTS),
             "quantity_used": round(random.uniform(0.1, 5000.0), 2),
             "unit":         random.choice(self.UNITS),

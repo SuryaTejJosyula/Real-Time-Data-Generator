@@ -9,11 +9,15 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import TRANSPORTATION as _T
 
 _fake = Faker()
 
-_STATUSES   = ["On-Time", "Delayed", "Early", "Cancelled", "Diverted"]
+_STATUSES      = ["On-Time", "Delayed", "Early", "Cancelled", "Diverted"]
 _VEHICLE_TYPES = ["Truck", "Van", "Motorcycle", "Container Ship", "Rail", "Drone", "Plane"]
+_VEHICLES      = _T["vehicle_ids"]
+_DRIVERS       = _T["driver_ids"]
+_SHIPMENTS     = _T["shipment_ids"]
 
 
 # ── 1 · GPS Fleet Tracking ────────────────────────────────────────────────────
@@ -26,8 +30,8 @@ class GPSFleetGenerator(BaseGenerator):
         return {
             "event_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
-            "vehicle_id":  f"VEH-{random.randint(1, 5000):05d}",
-            "driver_id":   f"DRV-{random.randint(1, 2000):05d}",
+            "vehicle_id":  random.choice(_VEHICLES),
+            "driver_id":   random.choice(_DRIVERS),
             "latitude":    lat,
             "longitude":   lon,
             "speed_kmh":   speed,
@@ -51,6 +55,7 @@ class PackageStatusGenerator(BaseGenerator):
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
             "tracking_id":  f"{random.randint(1000000000, 9999999999)}",
+            "shipment_ref": random.choice(_SHIPMENTS),
             "carrier":      random.choice(self.CARRIERS),
             "status":       random.choice(self.STATUSES),
             "facility_id":  f"HUB-{random.randint(1, 300):04d}",
@@ -98,7 +103,7 @@ class CargoUpdateGenerator(BaseGenerator):
         return {
             "cargo_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "shipment_ref": f"SHP-{random.randint(100000, 999999)}",
+            "shipment_ref": random.choice(_SHIPMENTS),
             "event":        random.choice(self.EVENTS),
             "origin":       _fake.city() + ", " + _fake.country_code(),
             "destination":  _fake.city() + ", " + _fake.country_code(),
@@ -120,8 +125,8 @@ class DriverBehaviourGenerator(BaseGenerator):
         return {
             "event_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
-            "driver_id":   f"DRV-{random.randint(1, 2000):05d}",
-            "vehicle_id":  f"VEH-{random.randint(1, 5000):05d}",
+            "driver_id":   random.choice(_DRIVERS),
+            "vehicle_id":  random.choice(_VEHICLES),
             "event_type":  random.choice(self.EVENTS),
             "severity_g":  round(random.uniform(0.2, 4.5), 2),
             "speed_kmh":   round(random.uniform(0, 140), 1),
@@ -141,7 +146,7 @@ class FuelReadingGenerator(BaseGenerator):
         return {
             "reading_id":   str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "vehicle_id":   f"VEH-{random.randint(1, 5000):05d}",
+            "vehicle_id":   random.choice(_VEHICLES),
             "fuel_type":    random.choice(["Diesel", "Petrol", "LNG", "Electric", "Hybrid"]),
             "level_before": fuel_before,
             "level_after":  round(max(0.0, fuel_before - consumed), 1),

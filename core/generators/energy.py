@@ -7,10 +7,12 @@ import uuid
 from datetime import datetime, timezone
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import ENERGY as _EN
 
-_METERS  = [f"MTR-{i:07d}" for i in range(1, 201)]
-_GRIDS   = [f"GRID-{i:03d}" for i in range(1, 31)]
-_REGIONS = ["North", "South", "East", "West", "Central"]
+_METERS   = _EN["meter_ids"]
+_GRIDS    = _EN["grid_ids"]
+_REGIONS  = _EN["regions"]
+_ACCOUNTS = _EN["account_ids"]
 
 
 # ── 1 · Smart Meter Readings ──────────────────────────────────────────────────
@@ -24,7 +26,7 @@ class SmartMeterGenerator(BaseGenerator):
             "reading_id":      str(uuid.uuid4()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "meter_id":        random.choice(_METERS),
-            "account_id":      f"ACC-{random.randint(1, 5000000):08d}",
+            "account_id":      random.choice(_ACCOUNTS),
             "consumption_kwh": consumption,
             "demand_kw":       round(random.uniform(0.0, 20.0), 2),
             "voltage_v":       round(random.uniform(110.0, 250.0), 1),

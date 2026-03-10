@@ -9,8 +9,13 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import HEALTHCARE as _H
 
 _fake = Faker()
+
+_PATIENT_IDS = _H["patient_ids"]
+_DEVICE_IDS  = _H["device_ids"]
+_DOCTOR_IDS  = _H["doctor_ids"]
 
 
 # ── 1 · Patient Vitals ────────────────────────────────────────────────────────
@@ -23,8 +28,8 @@ class PatientVitalsGenerator(BaseGenerator):
         return {
             "reading_id":     str(uuid.uuid4()),
             "timestamp":      datetime.now(timezone.utc).isoformat(),
-            "patient_id":     f"PT-{random.randint(100000, 999999)}",
-            "device_id":      f"MON-{random.randint(1, 500):04d}",
+            "patient_id":     random.choice(_PATIENT_IDS),
+            "device_id":      random.choice(_DEVICE_IDS),
             "ward":           random.choice(self.WARDS),
             "heart_rate_bpm": random.randint(45, 160),
             "bp_systolic":    random.randint(85, 185),
@@ -48,7 +53,7 @@ class ERAdmissionGenerator(BaseGenerator):
         return {
             "admission_id":   str(uuid.uuid4()),
             "timestamp":      datetime.now(timezone.utc).isoformat(),
-            "patient_id":     f"PT-{random.randint(100000, 999999)}",
+            "patient_id":     random.choice(_PATIENT_IDS),
             "triage_level":   random.choice(self.TRIAGES),
             "chief_complaint": random.choice(self.COMPLAINTS),
             "age":            random.randint(0, 95),
@@ -56,7 +61,7 @@ class ERAdmissionGenerator(BaseGenerator):
             "transport_mode": random.choice(self.TRANSPORT),
             "wait_time_min":  random.randint(0, 240),
             "er_bay":         f"BAY-{random.randint(1, 40):02d}",
-            "attending_id":   f"DR-{random.randint(1, 150):03d}",
+            "attending_id":   random.choice(_DOCTOR_IDS),
         }
 
 
@@ -72,13 +77,13 @@ class MedicationDispensingGenerator(BaseGenerator):
         return {
             "dispense_id":  str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "patient_id":   f"PT-{random.randint(100000, 999999)}",
+            "patient_id":   random.choice(_PATIENT_IDS),
             "medication":   random.choice(self.MEDS),
             "dose_mg":      random.choice([5, 10, 20, 25, 50, 100, 250, 500]),
             "route":        random.choice(self.ROUTES),
             "quantity":     random.randint(1, 30),
             "pharmacy_id":  f"PHARM-{random.randint(1, 20):02d}",
-            "prescriber_id": f"DR-{random.randint(1, 150):03d}",
+            "prescriber_id": random.choice(_DOCTOR_IDS),
             "status":       random.choice(self.STATUSES),
         }
 
@@ -94,7 +99,7 @@ class LabResultGenerator(BaseGenerator):
         return {
             "result_id":    str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "patient_id":   f"PT-{random.randint(100000, 999999)}",
+            "patient_id":   random.choice(_PATIENT_IDS),
             "test_type":    random.choice(self.TESTS),
             "lab_id":       f"LAB-{random.randint(1, 10):02d}",
             "result_value": round(random.uniform(0.1, 500.0), 2),
@@ -117,13 +122,13 @@ class DeviceAlertGenerator(BaseGenerator):
         return {
             "alert_id":    str(uuid.uuid4()),
             "timestamp":   datetime.now(timezone.utc).isoformat(),
-            "device_id":   f"DEV-{random.randint(1, 1000):04d}",
+            "device_id":   random.choice(_DEVICE_IDS),
             "device_type": random.choice(self.DEVICES),
             "ward":        random.choice(PatientVitalsGenerator.WARDS),
             "severity":    random.choice(self.SEVERITIES),
             "code":        f"E{random.randint(1000, 9999)}",
             "message":     _fake.sentence(nb_words=6),
-            "patient_id":  f"PT-{random.randint(100000, 999999)}" if random.random() > 0.3 else None,
+            "patient_id":  random.choice(_PATIENT_IDS) if random.random() > 0.3 else None,
             "acknowledged": False,
         }
 
@@ -140,8 +145,8 @@ class AppointmentEventGenerator(BaseGenerator):
         return {
             "appt_id":      str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "patient_id":   f"PT-{random.randint(100000, 999999)}",
-            "doctor_id":    f"DR-{random.randint(1, 150):03d}",
+            "patient_id":   random.choice(_PATIENT_IDS),
+            "doctor_id":    random.choice(_DOCTOR_IDS),
             "specialty":    random.choice(self.SPECIALTIES),
             "event_type":   random.choice(self.EVENTS),
             "duration_min": random.choice([15, 20, 30, 45, 60, 90]),

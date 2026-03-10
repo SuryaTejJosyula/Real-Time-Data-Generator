@@ -9,8 +9,13 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import RETAIL as _R
 
 _fake = Faker()
+
+_CUSTOMER_IDS = _R["customer_ids"]
+_STORE_IDS    = _R["store_ids"]
+_SKUS         = _R["skus"]
 
 
 # ── 1 · POS Transactions ──────────────────────────────────────────────────────
@@ -25,9 +30,9 @@ class POSTransactionGenerator(BaseGenerator):
         return {
             "transaction_id": str(uuid.uuid4()),
             "timestamp":      datetime.now(timezone.utc).isoformat(),
-            "store_id":       f"STORE-{random.randint(1, 500):04d}",
+            "store_id":       random.choice(_STORE_IDS),
             "terminal_id":    f"POS-{random.randint(1, 20):02d}",
-            "customer_id":    f"CUST-{random.randint(1, 100000):07d}",
+            "customer_id":    random.choice(_CUSTOMER_IDS),
             "item_count":     qty,
             "unit_price":     price,
             "total_amount":   round(qty * price, 2),
@@ -46,9 +51,9 @@ class InventoryChangeGenerator(BaseGenerator):
         return {
             "event_id":   str(uuid.uuid4()),
             "timestamp":  datetime.now(timezone.utc).isoformat(),
-            "sku":        f"SKU-{random.randint(10000, 99999)}",
+            "sku":        random.choice(_SKUS),
             "product":    _fake.catch_phrase(),
-            "store_id":   f"STORE-{random.randint(1, 500):04d}",
+            "store_id":   random.choice(_STORE_IDS),
             "action":     random.choice(self.ACTIONS),
             "quantity":   random.randint(1, 500),
             "stock_after": random.randint(0, 2000),
@@ -65,7 +70,7 @@ class FootfallGenerator(BaseGenerator):
         return {
             "sensor_id":   f"SENSOR-{random.randint(1, 100):03d}",
             "timestamp":   datetime.now(timezone.utc).isoformat(),
-            "store_id":    f"STORE-{random.randint(1, 200):04d}",
+            "store_id":    random.choice(_STORE_IDS),
             "zone":        random.choice(self.ZONES),
             "count_in":    random.randint(0, 15),
             "count_out":   random.randint(0, 15),
@@ -84,7 +89,8 @@ class CartAbandonmentGenerator(BaseGenerator):
         return {
             "session_id":      str(uuid.uuid4()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "customer_id":     f"CUST-{random.randint(1, 100000):07d}",
+            "customer_id":     random.choice(_CUSTOMER_IDS),
+            "store_id":        random.choice(_STORE_IDS),
             "cart_value":      round(random.uniform(5.0, 599.99), 2),
             "items_in_cart":   items,
             "last_page":       random.choice(self.PAGES),
@@ -106,12 +112,12 @@ class LoyaltyPointsGenerator(BaseGenerator):
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "customer_id":  f"CUST-{random.randint(1, 100000):07d}",
+            "customer_id":  random.choice(_CUSTOMER_IDS),
             "event_type":   event,
             "points":       pts if event in ("EARN", "BONUS") else -pts,
             "balance_after": random.randint(0, 50000),
             "tier":         random.choice(self.TIERS),
-            "store_id":     f"STORE-{random.randint(1, 500):04d}",
+            "store_id":     random.choice(_STORE_IDS),
         }
 
 
@@ -126,14 +132,14 @@ class PriceChangeGenerator(BaseGenerator):
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "sku":          f"SKU-{random.randint(10000, 99999)}",
+            "sku":          random.choice(_SKUS),
             "category":     random.choice(POSTransactionGenerator.CATEGORIES),
             "old_price":    old_p,
             "new_price":    round(old_p * (1 + ch), 2),
             "change_pct":   round(ch * 100, 1),
             "reason":       random.choice(self.REASONS),
             "effective_date": datetime.now(timezone.utc).date().isoformat(),
-            "store_id":     f"STORE-{random.randint(1, 500):04d}",
+            "store_id":     random.choice(_STORE_IDS),
         }
 
 

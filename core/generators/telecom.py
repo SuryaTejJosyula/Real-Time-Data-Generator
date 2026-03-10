@@ -9,12 +9,15 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import TELECOM as _TEL
 
 _fake = Faker()
 
-_REGIONS  = ["North-East", "South-West", "Midwest", "West-Coast", "Central"]
-_CELL_IDS = [f"CELL-{i:05d}" for i in range(1, 5001)]
-_DEVICES  = ["iPhone 16", "Samsung S25", "Pixel 9", "Xiaomi 15", "OnePlus 13", "Motorola Edge"]
+_REGIONS        = ["North-East", "South-West", "Midwest", "West-Coast", "Central"]
+_CELL_IDS       = _TEL["cell_ids"]
+_SUBSCRIBER_IDS = _TEL["subscriber_ids"]
+_NODE_IDS       = _TEL["node_ids"]
+_DEVICES        = ["iPhone 16", "Samsung S25", "Pixel 9", "Xiaomi 15", "OnePlus 13", "Motorola Edge"]
 
 
 # ── 1 · Network Traffic ───────────────────────────────────────────────────────
@@ -26,7 +29,7 @@ class NetworkTrafficGenerator(BaseGenerator):
         return {
             "event_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "node_id":      f"NODE-{random.randint(1, 2000):05d}",
+            "node_id":      random.choice(_NODE_IDS),
             "region":       random.choice(_REGIONS),
             "protocol":     random.choice(self.PROTOCOLS),
             "bytes_in":     random.randint(64, 150_000_000),
@@ -74,7 +77,7 @@ class DataUsageGenerator(BaseGenerator):
         return {
             "session_id":   str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "subscriber_id": f"SUB-{random.randint(1, 10_000_000):09d}",
+            "subscriber_id": random.choice(_SUBSCRIBER_IDS),
             "device":       random.choice(_DEVICES),
             "network":      random.choice(self.NETWORKS),
             "cell_id":      random.choice(_CELL_IDS),
@@ -98,7 +101,7 @@ class NetworkFaultGenerator(BaseGenerator):
         return {
             "fault_id":     str(uuid.uuid4()),
             "timestamp":    datetime.now(timezone.utc).isoformat(),
-            "node_id":      f"NODE-{random.randint(1, 2000):05d}",
+            "node_id":      random.choice(_NODE_IDS),
             "fault_type":   random.choice(self.FAULT_TYPES),
             "severity":     random.choice(self.SEVERITIES),
             "region":       random.choice(_REGIONS),
@@ -123,7 +126,7 @@ class ChurnSignalGenerator(BaseGenerator):
         return {
             "signal_id":     str(uuid.uuid4()),
             "timestamp":     datetime.now(timezone.utc).isoformat(),
-            "subscriber_id": f"SUB-{random.randint(1, 10_000_000):09d}",
+            "subscriber_id": random.choice(_SUBSCRIBER_IDS),
             "signal_type":   random.choice(self.SIGNALS),
             "churn_score":   score,
             "current_plan":  random.choice(self.PLANS),

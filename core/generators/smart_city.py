@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from faker import Faker
 
 from core.generators.base import BaseGenerator, UseCase
+from core.correlation import SMART_CITY as _SC
 
 _fake = Faker()
 
-_DISTRICTS = ["Downtown", "Midtown", "Suburbs", "Industrial", "Airport", "Port", "University"]
-_CITIES    = ["Chicago", "London", "Singapore", "Dubai", "Berlin", "Tokyo", "Sydney", "Toronto"]
+_DISTRICTS = _SC["districts"]
+_CITIES    = _SC["cities"]
 
 
 # ── 1 · Vehicle / Traffic Count ───────────────────────────────────────────────
